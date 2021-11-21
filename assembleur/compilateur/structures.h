@@ -7,18 +7,34 @@
 
 struct Reg
 {	
+	Reg() {};
+   	Reg(std::string name, std::vector<bool> code) : name(name)
+	{
+
+		for(int i = 0; i < 16; i++)
+			this->code[i] = code[i];	
+	}	
 	std::string name;
 	bool code[16];		// Un registre est représenté par le code qui lui correspond
 };
 
 struct Op
-{
+{	
+	
+	Op() {};
+   	Op(std::string name, bool *code) : name(name)
+	{
+		for(int i = 0; i < 16; i++)
+			this->code[i] = *(code+i);	
+	}	
 	std::string name;
 	bool code[16];
 };
 union Argument
 {
-
+	Reg r;
+	int i;
+	std::string lbl;
 };
 struct Instr // Une expression est une OP suivie d'un ou deux registres ou d'autres choses
 {

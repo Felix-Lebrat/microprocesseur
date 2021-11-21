@@ -44,7 +44,7 @@ r15
 
 
 #Jeu d'instructions
-CALL label 
+CALL label (sucre syntaxique pour JMP au début du label )
 
 MOV r1 r2 := r2 = r1
 
@@ -71,3 +71,5 @@ PUSH r1   :=
 POP r1    :=
 
 CMP s1 s2 := Renvoie les flags correspondant à s2 - s1
+
+JMP s := met le compteur du programme à s

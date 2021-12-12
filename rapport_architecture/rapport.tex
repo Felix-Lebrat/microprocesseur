@@ -1,0 +1,114 @@
+\documentclass{article}
+
+\title{Conception du microprocesseur}
+\date{13/12/2021}
+\author{Florian Tousnakhoff \and Fabio d'Ortoli Galerneau \and Félix Lebrat}
+
+\usepackage{moreverb}
+\usepackage[top=2cm]{geometry}
+\usepackage{bbm}
+\usepackage{amsfonts}
+\usepackage{amsmath}
+\usepackage{pdfpages}
+\usepackage{graphicx}
+\usepackage{multicol}
+
+\renewcommand{\thesection}{}
+
+\begin{document}
+    \maketitle
+    \section{Architecture générale}
+
+    \includegraphics[width=17.8cm,height=12.6cm,page=1]{schema.pdf}
+    \begin{itemize}
+        \item RA : read address
+        \item WE : write enable
+        \item WA : write address
+        \item RD : read data
+        \item WD : write data
+    \end{itemize}
+    les multiplexeurs dont l'entrée de contrôle n'est pas précisée sont
+    contrôlés par le décodeur
+
+    \section{Registres}
+    Le microprocesseur contient 16 registres généraux de 32 bits :
+    \begin{multicols}{2}
+     \begin{itemize}
+        \item rax
+        \item rbx
+        \item rcx
+        \item rdx
+        \item rsi
+        \item rdi
+        \item rbp
+        \item rsp
+        \item r8
+        \item r9
+        \item r10
+        \item r11
+        \item r12
+        \item r13
+        \item r14
+        \item r15
+    \end{itemize}
+    \end{multicols}
+    qui sont donc adressés sur 4 bits
+
+    \section{RAM}
+    L'adressage de la RAM se fait sur 16 bits,
+    et la taille des mots est de 32 bits.
+
+    \section{ALU}
+    L'ALU prends deux entrées sur 32 bits et sort le résultat, sur 32 bits également, de l'opération spécifiée
+    par l'entrée \texttt{instr} sur 3 bits selon le code suivant :
+    \begin{multicols}{2}
+    \begin{enumerate}
+        \item non bit à bit
+        \item et bit à bit
+        \item ou bit à bit
+        \item ou exclusif bit à bit
+        \item multiplication
+        \item addition
+        \item soustraction
+    \end{enumerate}
+    \end{multicols}
+    et définit les drapeaux \texttt{neg} et \texttt{null} en fontion du résultat.
+
+    \section{Instructions}
+    Les instructions sont codées sur 32 bits, dont 6 pour l'opcode et 13 par opérande. Elles sont stockées dans une
+    ROM, adressée sur 16 bits, et lues par le décodeur. Le jeu d'instructions est le suivant :
+    \begin{multicols}{2}
+        \begin{itemize}
+            \item MOV op1 op2
+            \item NOT op
+            \item XOR op1 op2
+            \item OR op1 op2
+            \item AND op1 op2
+            \item ADD op1 op2
+            \item SUB op1 op2
+            \item MUL op1 op2
+            \item LSL op
+            \item LSR op
+            \item PUSH op
+            \item POP op
+            \item CMP op1 op2 (définit les drapeaux pour op2-op1)
+            \item JMP op
+            \item JZ op (jump if null)
+            \item JN op (jump if neg)
+        \end{itemize}
+    \end{multicols}
+    \paragraph{Modes d'adressage :}
+    \begin{itemize}
+        \item MOV : op1 peut être une constante, une adresse RAM
+ou un registre, et op2 peut être une adresse RAM ou un registre.
+        \item Pour les opérations arithmétiques ou logiques à une opérande, op doit être un registre
+        \item Pour les opérations arithmétiques ou logiques à deux opérandes, op1 doit être une constante ou un registre
+et op2 un registre.
+        \item CMP : op1 et op2 sont des constantes ou des registres
+        \item pour les instructions de branchement, op est une constante ou un registre
+        \item PUSH et POP : op est une constante ou un registre
+    \end{itemize}
+
+    \section{Choix techniques :}
+    Les netlists sont écrites directement, à l'aide du C++ (ou d'un autre langage).
+\end{document}

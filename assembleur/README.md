@@ -64,7 +64,7 @@ MUL r1 r2 := r2 = r2 * r1
 
 LSL r1    :=
 
-LSL r2    := 
+LSR r2    := 
 
 PUSH r1   :=
 
@@ -73,3 +73,7 @@ POP r1    :=
 CMP s1 s2 := Renvoie les flags correspondant à s2 - s1
 
 JMP s := met le compteur du programme à s
+
+JZ s := || si le drapeau null est levé
+
+JN s := || si le drapeau neg est levé

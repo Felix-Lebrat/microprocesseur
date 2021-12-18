@@ -1,0 +1,7 @@
+INPUT fe_in0,fe_in1
+OUTPUT fe_AND0, fe_AND1
+VAR 
+fe_AND0 : 1, fe_AND1 : 1, fe_in0 : 1, fe_in1 : 1
+INfe_NOT0=NOT fe_in0 
+fe_AND0=AND fe_in1 fe_NOT0 
+fe_AND1=AND fe_in1 fe_in0 

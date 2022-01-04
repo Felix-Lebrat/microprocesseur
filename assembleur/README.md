@@ -3,6 +3,22 @@
 Les instructions sont codées sur 16-bits et doivent etre alignées sur ce nombre de bits
 
 
+mov_instr_code =   "0000"
+not_instr_code =   "0001"
+xor_instr_code =   "0010"
+or_instr_code =    "0011"
+and_instr_code =   "0100"
+add_instr_code =   "0101"
+sub_instr_code =   "0110"
+mul_instr_code =   "0111"
+lsl_instr_code =   "1000"
+lrl_instr_code =   "1001"
+push_instr_code =  "1010"
+pop_instr_code =   "1011"
+cmp_instr_code =   "1100"
+test_instr_code =  "1101"
+jmp_instr_code =   "1110"
+
 #Registres
 
 16 registres: 

@@ -19,6 +19,18 @@ cmp_instr_code =   "1100"
 test_instr_code =  "1101"
 jmp_instr_code =   "1110"
 
+#modes d'adressages
+mov :
+m r 00
+r m 01
+r r 10
+c r 11
+
+jmp : 00
+jnz : 01
+jz : 10
+jl : 11
+
 #Registres
 
 16 registres: 

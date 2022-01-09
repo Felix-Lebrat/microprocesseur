@@ -12,7 +12,7 @@ void print_netlist(ostream& flux,
 
 int main()
 {
-    int taille_addr=2;
+    int taille_addr=10;
     Variable reg1("reg",taille_addr);
     Variable reg2("reg",taille_addr);
     Variable we("we",1);

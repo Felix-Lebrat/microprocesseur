@@ -21,7 +21,17 @@ string Variable::print()
 {
     stringstream sstream;
     if(m_est_const)
-        sstream<<m_val;
+    {
+        if(m_taille==-1)
+            sstream<<m_val;
+        else
+        {
+            for(int i=m_taille-1;i>=0;i++)
+            {
+                sstream<<int((1<<i)&m_val==1);
+            }
+        }
+    }
     else
         sstream<<prefix<<"_"<<m_nom<<m_no;
     
@@ -225,4 +235,35 @@ vector<Variable*> GestionnaireRegistres::get_variables()
         ret.insert(ret.end(),temp.begin(),temp.end());
     }
     return ret;
+}
+
+Decodeur::Decodeur(Variable* instr)
+:m_instr(instr),
+{
+    Primitive *temp;
+    BusOfWire *bow;
+
+    //adresses des registres
+    m_reg1=new Primitive("SLICE",4,{new Variable(15),new Variable(18),instr});
+    m_intermediaires.push_back(m_reg1);
+    m_reg2=new Primitive("SLICE",4,{new Variable(28),new Variable(31),instr});
+    m_intermediaires.push_back(m_reg2);
+
+    //op1 et op2
+    temp=new Primitive("SLICE",13,{new Variable(5),new Variable(18),instr});
+    m_intermediaires.push_back(temp);
+    m_op1=new Primitive("CONCAT",32,{new Variable(0,19),temp->get_sortie()});
+    m_intermediaires.push_back(m_op1);
+
+    temp=new Primitive("SLICE",13,{new Variable(19),new Variable(31),instr});
+    m_intermediaires.push_back(temp);
+    m_op2=new Primitive("CONCAT",32,{new Variable(0,19),temp->get_sortie()});
+    m_intermediaires.push_back(m_op2);
+    //todo : faudrait pouvoir définir des constantes 00000000
+
+}
+
+Decodeur::~Decodeur()
+{
+    for(int i=0;i<m_intermediaires.size();i++) delete m_intermediaires[i];
 }

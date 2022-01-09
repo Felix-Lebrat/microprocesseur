@@ -11,7 +11,7 @@ class Variable
 {
 public:
     Variable(std::string nom,int taille);
-    Variable(int val):m_val(val),m_est_const(true){};
+    Variable(int val,int taille=-1):m_val(val),m_taille(taille),m_est_const(true){};
     std::string print();
     int get_taille(){return m_taille;};
     bool est_const(){return m_est_const;};
@@ -110,5 +110,20 @@ private:
     std::vector<Composant*> m_composants;
 };
 
+class Decodeur:public Composant
+{
+public:
+    Decodeur(Variable *instr){};
+    void print(std::ostream& flux)=0;
+    std::vector<Variable*> get_variables();
+    ~Decodeur();
+private:
+    Variable* m_instr;
+    Primitive *m_reg1;
+    Primitive *m_reg2;
+    Primitive *m_op1;
+    Primitive *m_op2;
+    std::vector<Composant*> m_intermediaires;
+};
 
 #endif

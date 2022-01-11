@@ -26,7 +26,7 @@ string Variable::print()
             sstream<<m_val;
         else
         {
-            for(int i=m_taille-1;i>=0;i++)
+            for(int i=m_taille-1;i>=0;i--)
             {
                 sstream<<int((1<<i)&m_val==1);
             }
@@ -36,6 +36,19 @@ string Variable::print()
         sstream<<prefix<<"_"<<m_nom<<m_no;
     
     return sstream.str();
+}
+
+vector<Variable*> Composant::get_variables(vector<Composant*> &composants)
+{
+    vector<Variable*> ret;
+    vector<Variable*> temp;
+    for(int i=0;i<composants.size();i++)
+    {
+        temp=composants[i]->get_variables();
+        ret.insert(ret.end(),temp.begin(),temp.end());
+    }
+
+    return ret;
 }
 
 Primitive::~Primitive()
@@ -150,6 +163,81 @@ Variable* BusOfWire::get_bus()
     return m_intermediaires[m_intermediaires.size()-1]->get_sortie();
 }
 
+Binop::Binop(vector<Variable*> &entrees,string type)
+:m_g(0),m_d(0),m_binop(0),m_var(0)
+{
+    if(entrees.size()==1)
+    {
+        m_var=entrees[0];
+    }
+    else
+    {
+        vector<Variable*> gauche;
+        gauche.insert(gauche.begin(),
+            entrees.begin(),
+            entrees.begin()+entrees.size()/2);
+        m_g=new Binop(gauche,type);
+        Variable* var_g=m_g->get_sortie();
+
+        vector<Variable*> droite;
+        droite.insert(droite.begin(),
+            entrees.begin()+entrees.size()/2,
+            entrees.end());
+        m_d=new Binop(droite,type);
+        Variable* var_d=m_d->get_sortie();
+
+        int taille=var_g->get_taille();
+        if(type=="CONCAT")
+            taille+=var_d->get_taille();
+
+        m_binop=new Primitive(type,taille,
+            {var_g,var_d});
+    }
+}
+
+void Binop::print(ostream& flux)
+{
+    if(m_var==0)
+    {
+        m_g->print(flux);
+        m_d->print(flux);
+        m_binop->print(flux);
+    }
+}
+
+vector<Variable*> Binop::get_variables()
+{
+    if(m_var!=0)
+        return {};
+
+    vector<Variable*> ret;
+    ret.push_back(m_binop->get_sortie());
+
+    vector<Variable*> temp;
+
+    temp=m_d->get_variables();
+    ret.insert(ret.end(),temp.begin(),temp.end());
+
+    temp=m_g->get_variables();
+    ret.insert(ret.end(),temp.begin(),temp.end());
+
+    return ret;
+}
+
+Variable* Binop::get_sortie()
+{
+    if(m_var==0)
+        return m_binop->get_sortie();
+    return m_var;
+}
+
+Binop::~Binop()
+{
+    if(m_g) delete m_g;
+    if(m_d) delete m_d;
+    if(m_binop) delete m_binop;
+}
+
 Registre::Registre(Variable* write_data,Variable* write_enable):
 m_reg("REG",write_data->get_taille(),{}),
 m_mux("MUX",write_data->get_taille(),{write_enable,m_reg.get_sortie(),write_data})
@@ -172,7 +260,6 @@ Variable* Registre::get_read_data()
 {
     return m_reg.get_sortie();
 }
-
 
 GestionnaireRegistres::GestionnaireRegistres(int taille_addr,Variable *reg1,Variable *reg2,Variable* write_enable,Variable* write_data)
 :m_val1(0),m_val2(0)
@@ -219,6 +306,7 @@ GestionnaireRegistres::~GestionnaireRegistres()
 
 void GestionnaireRegistres::print(std::ostream& flux)
 {
+    flux<<"//gestionnaire de registres\n";
     for(int i=0;i<m_composants.size();i++)
     {
         m_composants[i]->print(flux);
@@ -237,33 +325,457 @@ vector<Variable*> GestionnaireRegistres::get_variables()
     return ret;
 }
 
+vector<Variable*> Decodeur::decode(Variable* opcode)
+{
+    Primitive* temp;
+
+    if(opcode->get_taille()==1)
+    {
+        vector<Variable*> retour;
+        temp=new Primitive("NOT",1,{opcode});
+        m_intermediaires.push_back(temp);
+        retour.push_back(temp->get_sortie());
+        retour.push_back(opcode);
+        return retour;
+    }
+
+    int n=opcode->get_taille();
+
+    temp=new Primitive("SLICE",n/2,{new Variable(0),new Variable(n/2-1),opcode});
+    m_intermediaires.push_back(temp);
+    vector<Variable*> gauche=decode(temp->get_sortie());
+
+    temp=new Primitive("SLICE",(n+1)/2,{new Variable(n/2),new Variable(n-1),opcode});
+    m_intermediaires.push_back(temp);
+    vector<Variable*> droite=decode(temp->get_sortie());
+
+    vector<Variable*> retour;
+    for(int i=0;i<gauche.size();i++)
+    {
+        for(int j=0;j<droite.size();j++)
+        {
+            temp=new Primitive("AND",1,{gauche[i],droite[j]});
+            m_intermediaires.push_back(temp);
+            retour.push_back(temp->get_sortie());
+        }
+    }
+
+    return retour;
+}
+
 Decodeur::Decodeur(Variable* instr)
-:m_instr(instr),
 {
     Primitive *temp;
-    BusOfWire *bow;
+    Binop *tempb;
+    vector<Variable*> binop_temp;
+
+    //decodage du mode d'adressage
+    temp=new Primitive("SLICE",2,{new Variable(4),new Variable(5),instr});
+    m_intermediaires.push_back(temp);
+    m_addr_mode=decode(temp->get_sortie());
+    Variable *rm=m_addr_mode[0b01];//(mov registre->memoire)
+
+    //decodage de l'opcode
+    temp=new Primitive("SLICE",4,{new Variable(0),new Variable(3),instr});
+    m_intermediaires.push_back(temp);
+    vector<Variable*> opcode=decode(temp->get_sortie());
+    map<string,int> codes_instr=
+    {                  //op1 : reg ou cst ?
+        {"mov",0b0000},//osef
+        {"not",0b0001},//reg
+        {"xor",0b0010},//rr->reg, cr->cst
+        {"or",0b0011},//rr->reg, cr->cst
+        {"and",0b0100},//rr->reg, cr->cst
+        {"add",0b0101},//rr->reg, cr->cst
+        {"sub",0b0110},//rr->reg, cr->cst
+        {"mul",0b0111},//rr->reg, cr->cst
+        {"lsl",0b1000},//cst
+        {"lsr",0b1001},//cst
+        {"push",0b1010},//non implémenté
+        {"pop",0b1011},//non implémenté
+        {"cmp",0b1100},//osef
+        {"test",0b1101},//rr->reg, cr->cst
+        {"jmp",0b1110}//osef
+    };
 
     //adresses des registres
     m_reg1=new Primitive("SLICE",4,{new Variable(15),new Variable(18),instr});
     m_intermediaires.push_back(m_reg1);
-    m_reg2=new Primitive("SLICE",4,{new Variable(28),new Variable(31),instr});
+    temp=new Primitive("SLICE",4,{new Variable(28),new Variable(31),instr});
+    m_intermediaires.push_back(temp);
+    m_reg2=new Primitive("MUX",4,{opcode[codes_instr["not"]],
+        temp->get_sortie(),
+        m_reg1->get_sortie()//instruction "not" : on écrit dans reg1
+    });
     m_intermediaires.push_back(m_reg2);
 
-    //op1 et op2
-    temp=new Primitive("SLICE",13,{new Variable(5),new Variable(18),instr});
+    //write enable pour le gestionnaire de registres
+    //not || !(cmp||test||jmp||rm)
+    binop_temp.clear();
+
+    binop_temp.push_back(rm);
+    binop_temp.push_back(opcode[codes_instr["jmp"]]);
+    binop_temp.push_back(opcode[codes_instr["test"]]);
+    binop_temp.push_back(opcode[codes_instr["cmp"]]);
+
+    tempb=new Binop(binop_temp,"OR");
+    m_intermediaires.push_back(tempb);
+
+    temp=new Primitive("NOT",1,{tempb->get_sortie()});
+    m_intermediaires.push_back(temp);
+
+    m_reg_we=new Primitive("OR",1,{opcode[codes_instr["not"]],temp->get_sortie()});
+    m_intermediaires.push_back(m_reg_we);
+
+    //write enable pour la ram
+    //rm&&mov
+    m_ram_we=new Primitive("AND",1,{rm,opcode[codes_instr["mov"]]});
+    m_intermediaires.push_back(m_ram_we);
+
+    //op1
+    temp=new Primitive("SLICE",13,{new Variable(6),new Variable(18),instr});
     m_intermediaires.push_back(temp);
     m_op1=new Primitive("CONCAT",32,{new Variable(0,19),temp->get_sortie()});
     m_intermediaires.push_back(m_op1);
 
-    temp=new Primitive("SLICE",13,{new Variable(19),new Variable(31),instr});
-    m_intermediaires.push_back(temp);
-    m_op2=new Primitive("CONCAT",32,{new Variable(0,19),temp->get_sortie()});
-    m_intermediaires.push_back(m_op2);
-    //todo : faudrait pouvoir définir des constantes 00000000
+    //mux op1 : not||rr
+    m_mux_op1=new Primitive("OR",1,{opcode[codes_instr["not"]],m_addr_mode[0b10]});
+    m_intermediaires.push_back(m_mux_op1);
 
+    //instruction alu
+    binop_temp.clear();
+    vector<string> alu_operations={"not","and","or","xor","mul","add","sub"};
+    for(int i=0;i<alu_operations.size();i++)
+    {
+        if(i==1)
+        {
+            temp=new Primitive("OR",1,
+                {opcode[codes_instr["and"]],
+                opcode[codes_instr["test"]]});
+            m_intermediaires.push_back(temp);
+            binop_temp.push_back(temp->get_sortie());
+        }
+        else if(i==6)
+        {
+            temp=new Primitive("OR",1,
+                {opcode[codes_instr["sub"]],
+                opcode[codes_instr["cmp"]]});
+            m_intermediaires.push_back(temp);
+            binop_temp.push_back(temp->get_sortie());
+        }
+        else
+            binop_temp.push_back(opcode[codes_instr[alu_operations[i]]]);
+    }
+    binop_temp.push_back(new Variable(0,1));
+    m_alu_instr=new Binop({binop_temp},"CONCAT");
+    m_intermediaires.push_back(m_alu_instr);
+
+    //instruction retour
+    temp=new Primitive("OR",1,{m_addr_mode[0b01],m_addr_mode[0b10]});
+    m_intermediaires.push_back(temp);
+    temp=new Primitive("AND",1,{temp->get_sortie(),opcode[codes_instr["mov"]]});
+    m_intermediaires.push_back(temp);
+    m_r.push_back(temp->get_sortie());//reg1 : mov&&(rm||rr)
+    
+    temp=new Primitive("AND",1,{opcode[codes_instr["mov"]],m_addr_mode[0b00]});
+    m_intermediaires.push_back(temp);
+    m_r.push_back(temp->get_sortie());//ram : mov&&mr
+
+    temp=new Primitive("AND",1,{opcode[codes_instr["mov"]],m_addr_mode[0b11]});
+    m_intermediaires.push_back(temp);
+    temp=new Primitive("OR",1,{temp->get_sortie(),opcode[codes_instr["jmp"]]});
+    m_intermediaires.push_back(temp);
+    m_r.push_back(temp->get_sortie());//decodeur : jmp||(mov&&cr)
+}
+
+vector<Variable*> Decodeur::get_variables()
+{
+    return Composant::get_variables(m_intermediaires);
+}
+
+void Decodeur::print(ostream& flux)
+{
+    flux<<"//decodeur\n";
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        m_intermediaires[i]->print(flux);
+    }
 }
 
 Decodeur::~Decodeur()
 {
     for(int i=0;i<m_intermediaires.size();i++) delete m_intermediaires[i];
+}
+
+
+Flags::Flags(vector<Variable*> &addr_mode,Variable* write_data)
+{
+    //00 : jmp
+    //01 : jnz
+    //10 : jz
+    //11 : jl
+
+    Primitive* temp;
+    Primitive* reg=new Primitive("REG",2,{write_data});//0:zero 1:negatif
+    m_intermediaires.push_back(reg);
+    Primitive* z=new Primitive("SELECT",1,{new Variable(1),reg->get_sortie()});
+    m_intermediaires.push_back(z);
+    Primitive* n=new Primitive("SELECT",1,{new Variable(1),reg->get_sortie()});
+    m_intermediaires.push_back(n);
+
+    vector<Variable*> binop_temp;
+    temp=new Primitive("NOT",1,{z->get_sortie()});
+    m_intermediaires.push_back(temp);
+    temp=new Primitive("AND",1,{temp->get_sortie(),addr_mode[0b01]});
+    m_intermediaires.push_back(temp);
+    binop_temp.push_back(temp->get_sortie());
+
+    temp=new Primitive("AND",1,{z->get_sortie(),addr_mode[0b10]});
+    m_intermediaires.push_back(temp);
+    binop_temp.push_back(temp->get_sortie());
+
+    temp=new Primitive("AND",1,{n->get_sortie(),addr_mode[0b11]});
+    m_intermediaires.push_back(temp);
+    binop_temp.push_back(temp->get_sortie());
+
+    binop_temp.push_back(addr_mode[0b00]);
+
+    Binop* binop=new Binop(binop_temp,"OR");//sortie = jmp||(jnz&&!z)||(jz&&z)||(jl&&n)
+    m_intermediaires.push_back(binop);
+
+    m_rd=binop->get_sortie();
+}
+
+void Flags::print(ostream& flux)
+{
+    flux<<"//flags\n";
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        m_intermediaires[i]->print(flux);
+    }
+}
+
+vector<Variable*> Flags::get_variables()
+{
+    return Composant::get_variables(m_intermediaires);
+}
+
+Flags::~Flags()
+{
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        delete m_intermediaires[i];
+    }
+}
+
+OBIncr::OBIncr(Variable* i,Variable *c_i)
+{
+    m_o=new Primitive("XOR",1,{i,c_i});
+    m_c_o=new Primitive("AND",1,{i,c_i});
+}
+
+OBIncr::OBIncr(Variable* i)
+{
+    m_o=new Primitive("XOR",1,{i,new Variable(1)});
+    m_c_o=new Primitive("AND",1,{i,new Variable(1)});
+}
+
+void OBIncr::print(ostream& flux)
+{
+    m_o->print(flux);
+    m_c_o->print(flux);
+}
+
+vector<Variable*> OBIncr::get_variables()
+{
+    return {m_o->get_sortie(),m_c_o->get_sortie()};
+}
+
+Increment::Increment(Variable* i)
+{
+    Primitive* prim;
+    OBIncr* obincr(0);
+    vector<Variable*> binop_temp;
+    binop_temp.resize(i->get_taille(),0);
+    for(int k=i->get_taille()-1;k>=0;k--)
+    {
+        prim=new Primitive("SELECT",1,{new Variable(k),i});
+        m_intermediaires.push_back(prim);
+        if(obincr)
+        {
+            obincr=new OBIncr(prim->get_sortie(),obincr->get_c_o());
+        }
+        else
+        {
+            obincr=new OBIncr(prim->get_sortie());
+        }
+        m_intermediaires.push_back(obincr);
+        binop_temp[k]=obincr->get_o();
+    }
+    m_sortie=new Binop(binop_temp,"CONCAT");
+    m_intermediaires.push_back(m_sortie);
+}
+
+void Increment::print(ostream& flux)
+{
+    flux<<"//increment\n";
+    for(int i=0;i<m_intermediaires.size();i++) m_intermediaires[i]->print(flux);
+}
+
+vector<Variable*> Increment::get_variables()
+{
+    return Composant::get_variables(m_intermediaires);
+}
+
+Increment::~Increment()
+{
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        delete m_intermediaires[i];
+    }
+}
+
+PC::PC(Variable* j,Variable* addr)//j: jump (sortie des flags)
+{
+    Primitive *mux=new Primitive("MUX",addr->get_taille(),{j});
+    Primitive* reg=new Primitive("REG",addr->get_taille(),{mux->get_sortie()});
+    Increment* incr=new Increment(reg->get_sortie());
+    mux->ajouter_entree(incr->get_sortie());
+    mux->ajouter_entree(addr);
+    m_val=reg->get_sortie();
+
+    m_intermediaires.push_back(mux);
+    m_intermediaires.push_back(reg);
+    m_intermediaires.push_back(incr);
+}
+
+void PC::print(ostream& flux)
+{
+    flux<<"//PC\n";
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        m_intermediaires[i]->print(flux);
+    }
+}
+
+vector<Variable*> PC::get_variables()
+{
+    return Composant::get_variables(m_intermediaires);
+}
+
+PC::~PC()
+{
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        delete m_intermediaires[i];
+    }
+}
+
+Microprocesseur::Microprocesseur()
+{
+    //rom
+    Primitive* rom=new Primitive("ROM",32,{new Variable(13),new Variable(32)});
+    m_intermediaires.push_back(rom);
+
+    //decodeur
+    Decodeur* decodeur=new Decodeur(rom->get_sortie());
+    m_intermediaires.push_back(decodeur);
+
+    //alu
+    Primitive *op1=new Primitive("MUX",32,{decodeur->get_mux_op1(),
+        decodeur->get_op1()});
+    m_intermediaires.push_back(op1);
+    Primitive *op2=new Primitive("",32,{});
+    m_intermediaires.push_back(op2);
+    Alu *alu=new Alu(decodeur->get_alu_instr(),op1->get_sortie(),op2->get_sortie());
+    m_intermediaires.push_back(alu);
+
+    //mux final
+    Primitive* mux_ret1=new Primitive("MUX",32,{
+        decodeur->get_ret_instr(0),
+        alu->get_sortie()
+    });
+    m_intermediaires.push_back(mux_ret1);
+    Primitive* mux_ret2=new Primitive("MUX",32,{
+        decodeur->get_ret_instr(1),
+        mux_ret1->get_sortie()
+    });
+    m_intermediaires.push_back(mux_ret2);
+    Primitive* mux_ret3=new Primitive("MUX",32,{//ceci est le résultat final
+        decodeur->get_ret_instr(2),
+        mux_ret2->get_sortie(),
+        decodeur->get_op1()
+    });
+    m_intermediaires.push_back(mux_ret3);
+
+    //gestionnaire de registres
+    GestionnaireRegistres *gest=new GestionnaireRegistres(4,
+        decodeur->get_reg1(),decodeur->get_reg2(),decodeur->get_reg_we(),
+        mux_ret3->get_sortie()
+    );
+    m_intermediaires.push_back(gest);
+
+    //ram
+    Primitive* ra_ram=new Primitive("SLICE",13,{
+        new Variable(19),
+        new Variable(31),
+        gest->get_val1()
+    });
+    m_intermediaires.push_back(ra_ram);
+    Primitive* wa_ram=new Primitive("SLICE",13,{
+        new Variable(19),
+        new Variable(31),
+        gest->get_val2()
+    });
+    m_intermediaires.push_back(wa_ram);
+    Primitive* ram=new Primitive("RAM",32,{
+        new Variable(13),//addr size
+        new Variable(32),//word size
+        ra_ram->get_sortie(),//read addr
+        decodeur->get_ram_we(),//write enabl
+        wa_ram->get_sortie(),//write addr
+        mux_ret3->get_sortie()//write data
+    });
+    m_intermediaires.push_back(ram);
+
+    //flags
+    Flags *flags=new Flags(decodeur->get_addr_mode(),alu->get_flags());
+    m_intermediaires.push_back(flags);
+
+    //program counter
+    Primitive* jmp_addr=new Primitive("SLICE",13,{
+        new Variable(19),
+        new Variable(31),
+        mux_ret3->get_sortie()
+    });
+    m_intermediaires.push_back(jmp_addr);
+    PC *pc=new PC(flags->get_rd(),jmp_addr->get_sortie());
+    m_intermediaires.push_back(pc);
+
+    op1->ajouter_entree(gest->get_val1());
+    op2->ajouter_entree(gest->get_val2());
+    mux_ret1->ajouter_entree(gest->get_val1());
+    mux_ret2->ajouter_entree(ram->get_sortie());
+    rom->ajouter_entree(pc->get_val());
+}
+
+void Microprocesseur::print(ostream& flux)
+{
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        m_intermediaires[i]->print(flux);
+    }
+}
+
+vector<Variable*> Microprocesseur::get_variables()
+{
+    return Composant::get_variables(m_intermediaires);
+}
+
+Microprocesseur::~Microprocesseur()
+{
+    for(int i=0;i<m_intermediaires.size();i++)
+    {
+        delete m_intermediaires[i];
+    }
 }

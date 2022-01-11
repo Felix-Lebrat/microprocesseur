@@ -1,6 +1,7 @@
+flag=-g
+
 prog:build composants.o main.o
 	g++ $(flag) -o build/$@ build/composants.o build/main.o
-	build/prog>../../netlist_simulator/test/test.net
 
 build:
 	mkdir build

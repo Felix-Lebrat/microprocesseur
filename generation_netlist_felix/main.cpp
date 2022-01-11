@@ -12,16 +12,10 @@ void print_netlist(ostream& flux,
 
 int main()
 {
-    int taille_addr=10;
-    Variable reg1("reg",taille_addr);
-    Variable reg2("reg",taille_addr);
-    Variable we("we",1);
-    Variable wd("wd",4);
+    Microprocesseur *mic=new Microprocesseur();
+    print_netlist(cout,{mic},{},{});
+    delete mic;
 
-    GestionnaireRegistres gest(taille_addr,&reg1,&reg2,&we,&wd);
-
-    print_netlist(cout,{&gest},{&reg1,&reg2,&we,&wd},{gest.get_val1(),gest.get_val2()});
-    
     return 0;
 }
 

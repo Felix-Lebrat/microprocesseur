@@ -26,6 +26,10 @@ r m 01
 r r 10
 c r 11
 
+operations binaires :
+r r 10
+c r 11
+
 jmp : 00
 jnz : 01
 jz : 10

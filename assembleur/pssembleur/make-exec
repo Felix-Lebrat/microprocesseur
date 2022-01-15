@@ -1,0 +1,4 @@
+echo '#!/bin/bash' > pssembly
+echo 'P=$(dirname $0)' >> pssembly
+echo 'dune exec $P/assembleur.exe -- $@' >> pssembly
+chmod 777 pssembly

@@ -1,0 +1,34 @@
+main:
+	mov 0 rax # Seconde
+	mov 0 rbx	# Minute
+	mov 0 rcx # Heure
+	mov 0 rdx # Jour
+	jmp avance
+avance: 
+	add 1 rax 	
+	cmp 61 rax		
+	jz seconde_soixante
+	jmp avance
+seconde_soixante:
+	add 1 rbx		
+	mov 0 rax
+	cmp 61 rbx 			
+	jz minute_soixante	
+	jmp avance
+minute_soixante:
+	add 1 rcx
+	mov 0 rbx 
+	cmp 25 rcx
+	jz heure_fin
+	jmp avance
+heure_fin:
+	add 1 rdx 
+	mov 0 rcx
+	cmp 366 rdx		
+	jz fin_annee
+	jmp avance
+fin_annee:
+	mov 0 rdx	
+	jmp avance
+
+# commentaire 

@@ -120,9 +120,13 @@ public:
     std::vector<Variable*> get_variables();
     Variable* get_val1(){return m_val1;};
     Variable* get_val2(){return m_val2;};
+    Variable* get_registre(int no);
 private:
     Variable* m_val1;
     Variable* m_val2;
+    GestionnaireRegistres* m_ss_gest0;
+    GestionnaireRegistres* m_ss_gest1;
+    Registre* m_reg;
     std::vector<Composant*> m_composants;
 };
 
@@ -140,6 +144,7 @@ public:
     Variable* get_reg2(){return m_reg2->get_sortie();};
     Variable* get_reg_we(){return m_reg_we->get_sortie();};
     Variable* get_ram_we(){return m_ram_we->get_sortie();};
+    Variable* get_jmp(){return m_jmp;};
     std::vector<Variable*>& get_addr_mode(){return m_addr_mode;};
     ~Decodeur();
 private:
@@ -156,6 +161,7 @@ private:
     std::vector<Variable*> m_addr_mode;
 
     std::vector<Composant*> m_intermediaires;
+    Variable* m_jmp;
 };
 
 
@@ -203,7 +209,7 @@ private:
 class PC:public Composant
 {
 public:
-    PC(Variable* j,Variable* addr);
+    PC(Variable* flag,Variable* addr,Variable* jmp);
     void print(std::ostream& flux);
     std::vector<Variable*> get_variables();
     Variable* get_val(){return m_val;};
@@ -231,10 +237,22 @@ class Microprocesseur:public Composant
 public:
     Microprocesseur();
     void print(std::ostream& flux);
+    Variable* get_registre(int no){return m_gest->get_registre(no);};
+    Variable* get_ram(){return m_ram;};
+    Variable* get_pc(){return m_pc;};
+    Variable* get_ram_ra(){return m_ram_ra;};
+    Variable* get_ram_wa(){return m_ram_wa;};
+    Variable* get_out(){return m_out;};
     std::vector<Variable*> get_variables();
     ~Microprocesseur();
 private:
     std::vector<Composant*> m_intermediaires;
+    GestionnaireRegistres* m_gest;
+    Variable* m_ram;
+    Variable* m_ram_ra;
+    Variable* m_ram_wa;
+    Variable* m_out;
+    Variable *m_pc;
 };
 
 

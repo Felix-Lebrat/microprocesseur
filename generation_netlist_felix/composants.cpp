@@ -262,7 +262,7 @@ Variable* Registre::get_read_data()
 }
 
 GestionnaireRegistres::GestionnaireRegistres(int taille_addr,Variable *reg1,Variable *reg2,Variable* write_enable,Variable* write_data)
-:m_val1(0),m_val2(0)
+:m_val1(0),m_val2(0),m_ss_gest0(0),m_ss_gest1(0),m_reg(0)
 {
     if(taille_addr==0)
     {
@@ -272,6 +272,7 @@ GestionnaireRegistres::GestionnaireRegistres(int taille_addr,Variable *reg1,Vari
         m_val2=reg->get_read_data();
 
         m_composants.push_back(reg);
+        m_reg=reg;
     }
     else
     {
@@ -281,7 +282,7 @@ GestionnaireRegistres::GestionnaireRegistres(int taille_addr,Variable *reg1,Vari
         GestionnaireRegistres* ss_gest0=new GestionnaireRegistres(taille_addr-1,reg1,reg2,demux->get_s0(),write_data);
         GestionnaireRegistres* ss_gest1=new GestionnaireRegistres(taille_addr-1,reg1,reg2,demux->get_s1(),write_data);
         Primitive* mux_val1=new Primitive("MUX",write_data->get_taille(),{select_reg1->get_sortie(),ss_gest0->m_val1,ss_gest1->m_val1});
-        Primitive* mux_val2=new Primitive("MUX",write_data->get_taille(),{select_reg2->get_sortie(),ss_gest0->m_val1,ss_gest1->m_val1});
+        Primitive* mux_val2=new Primitive("MUX",write_data->get_taille(),{select_reg2->get_sortie(),ss_gest0->m_val2,ss_gest1->m_val2});
 
         m_val1=mux_val1->get_sortie();
         m_val2=mux_val2->get_sortie();
@@ -293,7 +294,19 @@ GestionnaireRegistres::GestionnaireRegistres(int taille_addr,Variable *reg1,Vari
         m_composants.push_back(ss_gest1);
         m_composants.push_back(mux_val1);
         m_composants.push_back(mux_val2);
+
+        m_ss_gest0=ss_gest0;
+        m_ss_gest1=ss_gest1;
     }
+}
+
+Variable* GestionnaireRegistres::get_registre(int no)
+{
+    if(m_reg)
+        return m_reg->get_read_data();
+    if(no%2==0)
+        return m_ss_gest0->get_registre(no/2);
+    return m_ss_gest1->get_registre(no/2);
 }
 
 GestionnaireRegistres::~GestionnaireRegistres()
@@ -380,23 +393,24 @@ Decodeur::Decodeur(Variable* instr)
     m_intermediaires.push_back(temp);
     vector<Variable*> opcode=decode(temp->get_sortie());
     map<string,int> codes_instr=
-    {                  //op1 : reg ou cst ?
-        {"mov",0b0000},//osef
-        {"not",0b0001},//reg
-        {"xor",0b0010},//rr->reg, cr->cst
-        {"or",0b0011},//rr->reg, cr->cst
-        {"and",0b0100},//rr->reg, cr->cst
-        {"add",0b0101},//rr->reg, cr->cst
-        {"sub",0b0110},//rr->reg, cr->cst
-        {"mul",0b0111},//rr->reg, cr->cst
-        {"lsl",0b1000},//cst
-        {"lsr",0b1001},//cst
+    {                  
+        {"mov",0b0000},
+        {"not",0b0001},
+        {"xor",0b0010},
+        {"or",0b0011},
+        {"and",0b0100},
+        {"add",0b0101},
+        {"sub",0b0110},
+        {"mul",0b0111},
+        {"lsl",0b1000},
+        {"lsr",0b1001},
         {"push",0b1010},//non implémenté
         {"pop",0b1011},//non implémenté
-        {"cmp",0b1100},//osef
-        {"test",0b1101},//rr->reg, cr->cst
-        {"jmp",0b1110}//osef
+        {"cmp",0b1100},
+        {"test",0b1101},
+        {"jmp",0b1110}
     };
+    m_jmp=opcode[codes_instr["jmp"]];
 
     //adresses des registres
     m_reg1=new Primitive("SLICE",4,{new Variable(15),new Variable(18),instr});
@@ -635,9 +649,10 @@ Increment::~Increment()
     }
 }
 
-PC::PC(Variable* j,Variable* addr)//j: jump (sortie des flags)
+PC::PC(Variable* flag,Variable* addr,Variable *jmp)
 {
-    Primitive *mux=new Primitive("MUX",addr->get_taille(),{j});
+    Primitive *et=new Primitive("AND",1,{jmp,flag});
+    Primitive *mux=new Primitive("MUX",addr->get_taille(),{et->get_sortie()});
     Primitive* reg=new Primitive("REG",addr->get_taille(),{mux->get_sortie()});
     Increment* incr=new Increment(reg->get_sortie());
     mux->ajouter_entree(incr->get_sortie());
@@ -647,6 +662,7 @@ PC::PC(Variable* j,Variable* addr)//j: jump (sortie des flags)
     m_intermediaires.push_back(mux);
     m_intermediaires.push_back(reg);
     m_intermediaires.push_back(incr);
+    m_intermediaires.push_back(et);
 }
 
 void PC::print(ostream& flux)
@@ -714,6 +730,7 @@ Microprocesseur::Microprocesseur()
         mux_ret3->get_sortie()
     );
     m_intermediaires.push_back(gest);
+    m_gest=gest;
 
     //ram
     Primitive* ra_ram=new Primitive("SLICE",13,{
@@ -721,12 +738,14 @@ Microprocesseur::Microprocesseur()
         new Variable(31),
         gest->get_val1()
     });
+    m_ram_ra=ra_ram->get_sortie();
     m_intermediaires.push_back(ra_ram);
     Primitive* wa_ram=new Primitive("SLICE",13,{
         new Variable(19),
         new Variable(31),
         gest->get_val2()
     });
+    m_ram_wa=wa_ram->get_sortie();
     m_intermediaires.push_back(wa_ram);
     Primitive* ram=new Primitive("RAM",32,{
         new Variable(13),//addr size
@@ -737,6 +756,8 @@ Microprocesseur::Microprocesseur()
         mux_ret3->get_sortie()//write data
     });
     m_intermediaires.push_back(ram);
+    m_ram=ram->get_sortie();
+
 
     //flags
     Flags *flags=new Flags(decodeur->get_addr_mode(),alu->get_flags());
@@ -749,8 +770,9 @@ Microprocesseur::Microprocesseur()
         mux_ret3->get_sortie()
     });
     m_intermediaires.push_back(jmp_addr);
-    PC *pc=new PC(flags->get_rd(),jmp_addr->get_sortie());
+    PC *pc=new PC(flags->get_rd(),jmp_addr->get_sortie(),decodeur->get_jmp());
     m_intermediaires.push_back(pc);
+    m_pc=pc->get_val();
 
     op1->ajouter_entree(gest->get_val1());
     op2->ajouter_entree(gest->get_val2());

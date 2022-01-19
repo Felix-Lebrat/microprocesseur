@@ -16,11 +16,9 @@ void print_netlist(ostream& flux,
 int main()
 {
     Microprocesseur *mic=new Microprocesseur();
-    print_netlist(cout,{mic},{},{},
+    print_netlist(cout,{mic},{},{mic->get_out()},
         mic->get_registre(15),mic->get_registre(14),mic->get_ram());
     delete mic;
-
-
 
     return 0;
 }

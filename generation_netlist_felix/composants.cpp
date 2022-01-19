@@ -779,6 +779,8 @@ Microprocesseur::Microprocesseur()
     mux_ret1->ajouter_entree(gest->get_val1());
     mux_ret2->ajouter_entree(ram->get_sortie());
     rom->ajouter_entree(pc->get_val());
+    m_out=decodeur->get_reg_we();
+
 }
 
 void Microprocesseur::print(ostream& flux)

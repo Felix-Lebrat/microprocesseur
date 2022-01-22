@@ -1,34 +1,107 @@
 main:
+calcul_timestamp:
 	mov 0 rax # Seconde
 	mov 0 rbx	# Minute
 	mov 0 rcx # Heure
 	mov 0 rdx # Jour
-	jmp avance
-avance: 
-	add 1 rax 	
-	cmp 61 rax		
-	jz seconde_soixante
-	jmp avance
-seconde_soixante:
-	add 1 rbx		
-	mov 0 rax
-	cmp 61 rbx 			
-	jz minute_soixante	
-	jmp avance
-minute_soixante:
-	add 1 rcx
-	mov 0 rbx 
-	cmp 25 rcx
-	jz heure_fin
-	jmp avance
-heure_fin:
+	mov 1 rdi # Mois
+	mov 2022 rsi # Annee
+	mov r15 r9
+	mov 1640 r10 #On met le nombre de secondes le 1er janvier 2022 dans r10
+	mul 10 r10
+	add 9 r10
+	mul 10 r10
+	add 9 r10
+	mul 10 r10
+	add 5 r10
+	mul 10 r10
+	add 2 r10
+	mul 100 r10
+	sub r10 r9 # On ramene au nombre de secondes depuis début 2022
+	mov 864 r11
+	mul 100 r11
+	mov 3600 r12
+	mov 60 r13
+calcul_mois:
+	mov 31 r10  #janvier
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 28 r10  #fevrier
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 31 r10  #mars
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 30 r10  #avril
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 31 r10  #mai
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 30 r10  #juin
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 31 r10  #juillet
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 31 r10  #aout
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 30 r10  #septembre
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 31 r10  #octobre
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 30 r10  #novembre
+	mul r11 r10
+	cmp r10 r11
+	jl calcul_jour 
+	add 1 rdi
+	mov 31 r10  #decembre
+	mul r11 r10
+	cmp r10 r11
+	jmp calcul_jour
+calcul_jour:
+	cmp r9 r11 
+	jl calcul_heure
 	add 1 rdx 
-	mov 0 rcx
-	cmp 366 rdx		
-	jz fin_annee
-	jmp avance
-fin_annee:
-	mov 0 rdx	
-	jmp avance
+	sub r11 r9
+	jmp calcul_jour
+calcul_heure:
+	cmp r9 r12
+	jl calcul_minute
+	add 1 rdx
+	sub r12 r9
+	jmp calcul_heure
+calcul_minute:
+	cmp r9 r13
+	jl calcul_seconde
+	add 1 rdx
+	sub r12 r9
+	jmp calcul_minute
+calcul_seconde:
+	mov r9 rax
+afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacement et ensuite en r14
 
-# commentaire 
+

@@ -1,12 +1,4 @@
-#include <iostream>
-#include <fstream>
-#include <vector>
-#include <string>
-#include <sstream>
-#include <cmath>
-#include <map>
-#include <set>
-#include <assert.h>
+#include "alu.h"
 
 using namespace std;
 
@@ -166,6 +158,31 @@ int generateAddTree(ostream &out, string prefix, unsigned int N=nbits, unsigned 
 //      prefix+to_string(offset)+"_"+to_string(N));
 }
 
+//  void generateHead(ostream &out)
+//  {
+//      out << "INPUT ual_e1, ual_e2, ual_instr" << endl;
+//      out << "OUTPUT ual_s,ual_instr0_00000101" << endl;
+//      bool notFirst=false;
+//      out << "VAR ";
+//      int i(0);
+//      for (pair<string,unsigned int> var : vars)
+//      {
+//          i++;
+//          if (notFirst)
+//          {
+//              out << ", ";
+//              if(i==5)
+//              {
+//                  i=0;
+//                  out<<endl;
+//              }
+//          }
+//          out << var.first << ":" << var.second;
+//          notFirst=true;
+//      }
+//      out << endl << "IN" << endl;
+//  }
+
 void netlistBody(ostream &out)
 {
     out << "bit32_0 = 00000000000000000000000000000000" << endl;
@@ -186,7 +203,7 @@ void netlistBody(ostream &out)
     // AND
     out<<"//and\n";
     out << "ual_and_out = AND ual_e1 ual_e2" << endl;
-    out << "ual_s_2 = MUX ual_instr0_00000010 bit32_0 ual_and_out" << endl;
+    out << "ual_s_2 = MUX ual_instr0_00000100 bit32_0 ual_and_out" << endl;
     vars.insert({"ual_and_out",nbits});
     vars.insert({"ual_s_2",nbits});
 
@@ -200,7 +217,7 @@ void netlistBody(ostream &out)
     // XOR
     out<<"//xor\n";
     out << "ual_xor_out = XOR ual_e1 ual_e2" << endl;
-    out << "ual_s_4 = MUX ual_instr0_00000100 bit32_0 ual_xor_out" << endl;
+    out << "ual_s_4 = MUX ual_instr0_00000010 bit32_0 ual_xor_out" << endl;
     vars.insert({"ual_xor_out",nbits});
     vars.insert({"ual_s_4",nbits});
 
@@ -216,10 +233,10 @@ void netlistBody(ostream &out)
     }
     generateConcat(out, "nbits1", nbits);//000...001->nbits10_32
     generateAdd(out, "ual_not_out", "nbits10_32", "ual_e2min", "ual_Rmin");//-e2->ual_2min
-    out << "ual_e2mod = MUX ual_instr0_00000111 ual_e2 ual_e2min" << endl;//si c'est un sub, -e2, sinon e2
+    out << "ual_e2mod = MUX ual_instr0_00000110 ual_e2 ual_e2min" << endl;//si c'est un sub, -e2, sinon e2
     vars.insert({"ual_e2mod",nbits});
     generateAdd(out, "ual_e1", "ual_e2mod", "ual_add_out", "ual_addR");
-    out << "ual_instr_add_sub = OR ual_instr0_00000111 ual_instr0_00000110" << endl;//AND -> OR
+    out << "ual_instr_add_sub = OR ual_instr0_00000101 ual_instr0_00000110" << endl;//AND -> OR
     vars.insert({"ual_instr_add_sub",1});
     out << "ual_s_5 = MUX ual_instr_add_sub bit32_0 ual_add_out" << endl;
     vars.insert({"ual_s_5",nbits});
@@ -236,7 +253,7 @@ void netlistBody(ostream &out)
     }
     int id=generateAddTree(out, "ual_mult_term_");
 //    out << "ual_s_6 = MUX ual_instr0_00000101 bit32_0 ual_mult_term_0_32" << endl;
-    out << "ual_s_6 = MUX ual_instr0_00000101 bit32_0 ual_mult_term_ns"<<id << endl;
+    out << "ual_s_6 = MUX ual_instr0_00000111 bit32_0 ual_mult_term_ns"<<id << endl;
     vars.insert({"ual_s_6",nbits});
 
     out<<"//mux final....\n";
@@ -251,37 +268,12 @@ void netlistBody(ostream &out)
     out << "ual_s = OR ual_s_1234 ual_s_56" << endl;
 }
 
-void generateHead(ostream &out)
+map<string,unsigned int>& variables_alu()
 {
-    out << "INPUT ual_e1, ual_e2, ual_instr" << endl;
-    out << "OUTPUT ual_s,ual_instr0_00000101" << endl;
-    bool notFirst=false;
-    out << "VAR ";
-    int i(0);
-    for (pair<string,unsigned int> var : vars)
-    {
-        i++;
-        if (notFirst)
-        {
-            out << ", ";
-            if(i==5)
-            {
-                i=0;
-                out<<endl;
-            }
-        }
-        out << var.first << ":" << var.second;
-        notFirst=true;
-    }
-    out << endl << "IN" << endl;
+    return vars;
 }
 
-int main()
+void print_alu(ostream &flux)
 {
-    ofstream netlist("netlist.txt");
-    stringstream body;
-    netlistBody(body);
-    generateHead(netlist);
-    netlist << body.str();
-    return 0;
+    netlistBody(flux);
 }

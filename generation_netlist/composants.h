@@ -2,16 +2,19 @@
 #define _COMPOSANTS_H_
 
 #include <ostream>
+#include <fstream>
 #include <string>
 #include <map>
 #include <vector>
 #include <sstream>
+#include "alu.h"
 
 class Variable
 {
 public:
-    Variable(std::string nom,int taille);
-    Variable(int val,int taille=-1):m_val(val),m_taille(taille),m_est_const(true){};
+    Variable(std::string nom,int taille,bool prefix=true);
+    Variable(int val,int taille=-1):
+        m_val(val),m_taille(taille),m_est_const(true){};
     std::string print();
     int get_taille(){return m_taille;};
     bool est_const(){return m_est_const;};
@@ -21,6 +24,7 @@ private:
     int m_taille;
     int m_val;
     bool m_est_const;
+    bool m_prefix;
     static std::map<std::string,int> instances;
     static const std::string prefix;
 };
@@ -153,7 +157,7 @@ private:
     Primitive *m_reg2;
     Primitive *m_op1;//aussi dans le mux final
     Primitive *m_mux_op1;
-    Binop *m_alu_instr;
+    Primitive *m_alu_instr;
     Primitive* m_reg_we;
     Primitive* m_ram_we;
     std::vector<Variable*> m_r;//instruction de retour : 
@@ -222,14 +226,22 @@ private:
 class Alu:public Composant
 {
 public:
-    Alu(Variable* instr,Variable* op1,Variable* op2):m_op1(op1){};
-    void print(std::ostream& flux){};
-    std::vector<Variable*> get_variables(){return {};};
-    Variable* get_sortie(){return m_op1;};
-    Variable* get_flags(){return new Variable(0b00,2);};
-    ~Alu(){};
+    Alu(Variable* instr,Variable* op1,Variable* op2);
+    void print(std::ostream& flux);
+    std::vector<Variable*> get_variables();
+    Variable* get_sortie(){return m_sortie;};
+    Variable* get_flags(){return m_flags->get_sortie();};
+    ~Alu();
 private:
+    Variable* reverse(Variable* var);
     Variable* m_op1;
+    Variable* m_op2;
+    Variable* m_instr;
+    Variable* m_sortie;
+    Primitive* m_flags;
+    std::vector<Composant*> m_intermediaires;
+    std::vector<Variable*> m_variables;
+    std::vector<Variable*> m_binop_temp;
 };
 
 class Microprocesseur:public Composant

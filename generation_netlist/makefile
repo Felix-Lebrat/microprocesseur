@@ -1,7 +1,7 @@
 flag=-g
 
-prog:build composants.o main.o
-	g++ $(flag) -o build/$@ build/composants.o build/main.o
+prog:build composants.o main.o alu.o
+	g++ $(flag) -o build/$@ build/composants.o build/main.o build/alu.o
 
 build:
 	mkdir build

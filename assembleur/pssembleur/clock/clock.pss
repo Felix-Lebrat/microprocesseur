@@ -121,7 +121,14 @@ calcul_minute:
 	sub r13 r9
 	jmp calcul_minute
 calcul_seconde:
+	mov 60 r13		
+	cmp r13 r9
+	jz mettre_zero
 	mov r9 rax
+	jmp afficher
+mettre_zero:
+	mov 0 rax
+	add 1 rbx
 afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacement et ensuite en r14		
 	mov 1 r13 #On va mettre tout sur ce fragment de mémoire
 	mov rcx (r13) # On place les heures

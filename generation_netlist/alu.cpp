@@ -110,22 +110,19 @@ void generateAdd(ostream &out, string E1, string E2, string S, string R="", bool
 void generateSlide(ostream &out, string E, string S, unsigned int d)//peut etre fait plus vite
 {
     out<<"//slide\n";
-    unsigned int i;
-    for (i=0; i<nbits-d; i++)
+    string slide=E+"_0_"+to_string(nbits-d-1);
+    out << slide << " = SLICE " << 0 << " " <<nbits-d-1<<" "<< E << endl;
+    vars.insert({slide,nbits-d});
+    string zeros;
+    for(int i=0;i<d;i++)
     {
-        out << E << "_" << i << " = SELECT " << i << " " << E << endl;
-        out << S << "_" << i+d << " = " << E << "_" << i << endl;
-        vars.insert({E + "_" + to_string(i),1});
-        vars.insert({S + "_" + to_string(i+d),1});
+        zeros+="0";
     }
-    for (i=0; i<d; i++)
-    {
-        out << S << "_" << i << " = 0" << endl;
-        vars.insert({S+"_"+to_string(i),1});
-    }
-    generateConcat(out, S+"_", nbits);
-    out<<S<<"="<<S<<"_0_32\n";
-    vars.insert({S,32});
+    if(d>0)
+        out<< S<<"=CONCAT "<<zeros<<" "<<slide<<endl;
+    else
+        out<<S<<"="<<slide<<endl;
+    vars.insert({S,nbits});
     out<<"\n";
 }
 

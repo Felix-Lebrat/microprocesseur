@@ -1,8 +1,8 @@
 main:
 	mov 1 r14
-	mov 1 rax # Seconde
-	mov 1 rbx	# Minute
-	mov 1 rcx # Heure
+	mov 0 rax # Seconde
+	mov 0 rbx	# Minute
+	mov 0 rcx # Heure
 	mov 1 rdx # Jour
 	mov 1 rdi # Mois
 	mov 2022 rsi # Annee
@@ -20,6 +20,7 @@ main:
 	sub r10 r9 # On ramene au nombre de secondes depuis début 2022
 	mov 864 r11
 	mul 100 r11
+	sub 1 r11
 	mov 3600 r12
 	mov 59 r13
 calcul_mois:

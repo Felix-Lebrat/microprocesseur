@@ -1,4 +1,4 @@
-generate : clock_speed.pss
-	../pssembly clock_speed.pss
+generate : clock.pss
+	../pssembly clock.pss
 
 .PHONY : generate

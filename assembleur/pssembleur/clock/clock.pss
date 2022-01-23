@@ -1,5 +1,4 @@
 main:
-calcul_timestamp:
 	mov 0 rax # Seconde
 	mov 0 rbx	# Minute
 	mov 0 rcx # Heure
@@ -91,17 +90,31 @@ calcul_jour:
 calcul_heure:
 	cmp r9 r12
 	jl calcul_minute
-	add 1 rdx
+	add 1 rcx
 	sub r12 r9
 	jmp calcul_heure
 calcul_minute:
 	cmp r9 r13
 	jl calcul_seconde
-	add 1 rdx
+	add 1 rbx
 	sub r12 r9
 	jmp calcul_minute
 calcul_seconde:
 	mov r9 rax
-afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacement et ensuite en r14
+afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacement et ensuite en r14		
+	mov 1 r13 #On va mettre tout sur ce fragment de mémoire
+	mov rcx (r13) # On place les heures
+	add 1 r13
+	mov rbx (r13)
+	add 1 r13
+	mov rax (r13)
+	add 1 r13
+	mov rdx (r13)
+	add 1 r13
+	mov rdi (r13)
+	add 1 r13
+	mov rsi (r13)
+	mov 1 r14
+	jmp main # On recommence depuis le début	
 
-
+ 

@@ -1,8 +1,9 @@
 main:
-	mov 0 rax # Seconde
-	mov 0 rbx	# Minute
-	mov 0 rcx # Heure
-	mov 0 rdx # Jour
+	mov 1 r14
+	mov 1 rax # Seconde
+	mov 1 rbx	# Minute
+	mov 1 rcx # Heure
+	mov 1 rdx # Jour
 	mov 1 rdi # Mois
 	mov 2022 rsi # Annee
 	mov r15 r9
@@ -20,67 +21,77 @@ main:
 	mov 864 r11
 	mul 100 r11
 	mov 3600 r12
-	mov 60 r13
+	mov 59 r13
 calcul_mois:
 	mov 31 r10  #janvier
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r9
 	add 1 rdi
 	mov 28 r10  #fevrier
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 31 r10  #mars
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 30 r10  #avril
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 31 r10  #mai
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 30 r10  #juin
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 31 r10  #juillet
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 31 r10  #aout
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 30 r10  #septembre
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 31 r10  #octobre
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 30 r10  #novembre
 	mul r11 r10
-	cmp r10 r11
+	cmp r9 r10
 	jl calcul_jour 
+	sub r10 r11
 	add 1 rdi
 	mov 31 r10  #decembre
 	mul r11 r10
-	cmp r10 r11
-	jmp calcul_jour
+	cmp r9 r10
 calcul_jour:
 	cmp r9 r11 
 	jl calcul_heure
@@ -97,7 +108,7 @@ calcul_minute:
 	cmp r9 r13
 	jl calcul_seconde
 	add 1 rbx
-	sub r12 r9
+	sub r13 r9
 	jmp calcul_minute
 calcul_seconde:
 	mov r9 rax
@@ -114,7 +125,7 @@ afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacem
 	mov rdi (r13)
 	add 1 r13
 	mov rsi (r13)
-	mov 1 r14
+	#mov 1 r14
 	jmp main # On recommence depuis le début	
 
  

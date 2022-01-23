@@ -22,12 +22,21 @@ main:
 	add 2 r10
 	mul 100 r10
 	sub r10 r9 # On ramene au nombre de secondes depuis début 2022
+	mov 3153 r10
+	mul 10 r10
+	add 6 r10
+ 	mul 1000 r10
 	mov 864 r11
 	mul 100 r11
 	sub 1 r11
 	mov 3600 r12
 	sub 1 r12
 	mov 61 r13
+calcul_an:
+	cmp r9 r10
+	jl calcul_mois
+	add 1 rsi
+	jmp calcul_an
 calcul_mois:
 	mov 31 r10  #janvier
 	mul r11 r10

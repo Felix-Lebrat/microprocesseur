@@ -1,0 +1,7 @@
+Pour pouvoir ajouter la coloration syntaxique, il faut rajouter la ligne suivante à son vimrc :
+
+augroup filetypedetect
+au BufNewFile,BufRead *.pss setf pssembly
+augroup END
+
+Et mettre le fichier pssembly.vim dand .vim/syntax

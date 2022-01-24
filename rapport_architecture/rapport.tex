@@ -89,12 +89,11 @@
             \item MUL op1 op2
             \item LSL op
             \item LSR op
-            \item PUSH op
-            \item POP op
             \item CMP op1 op2 (définit les drapeaux pour op2-op1)
             \item JMP op
             \item JZ op (jump if null)
-            \item JN op (jump if neg)
+            \item JNZ op (jump if not zero)
+						\item JL op (jump if less than)
         \end{itemize}
     \end{multicols}
     \paragraph{Modes d'adressage :}
@@ -106,9 +105,19 @@ ou un registre, et op2 peut être une adresse RAM ou un registre.
 et op2 un registre.
         \item CMP : op1 et op2 sont des constantes ou des registres
         \item pour les instructions de branchement, op est une constante ou un registre
-        \item PUSH et POP : op est une constante ou un registre
     \end{itemize}
 
     \section{Choix techniques :}
     Les netlists sont écrites directement, à l'aide du C++ (ou d'un autre langage).
+		\section{Diagramme UML de la génération de netlist en C++}
+		\includegraphics[width=14.8cm,height=10.6cm,page=1]{uml.pdf}	
+		\section{Schéma du gestionnaire de registres}
+		\includegraphics[width=14.8cm,height=10.6cm,page=1]{gestionnaire_registres.pdf}
+		\section{Schéma de l'ALU :}
+		\includegraphics[scale=0.75]{ual.png}
+		\section{Assembleur et Horloge:}
+		L'assembleur a été réalisé en OCaml, il consiste en un lexer, un parser et une fonction transformant l'arbre de syntaxe abstraite en code binaire lu et reconnu par le décodeur du microprocesseur.\\	
+		L'Horloge a été faite avec l'assembleur, elle donne l'heure du Méridien de Greenwich.\\
+		Le signal d'horloge du microprocesseur est donné par le timestamp (nombre de secondes depuis le premier janvier 1970) et est transformé par le programme en la date.\\
+		Cela est ensuite mis en mémoire et on fait pointer le registre r14 vers cet endroit de la mémoire qui sera ensuite affiché par l'afficheur 7 segments.\\
 \end{document}

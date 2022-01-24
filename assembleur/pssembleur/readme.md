@@ -39,8 +39,6 @@ SUB r1 r2 := r2 = r2 - r1\
 MUL r1 r2 := r2 = r2 * r1\
 LSL r1    :=\
 LSL r2    := \
-PUSH r1   :=\
-POP r1    :=\
 CMP s1 s2 := Renvoie les flags correspondant à s2 - s1\
 TEST s1 s2 := Renvoie les flags correspondant à s1 & s2\
 JMP s := met le compteur du programme à s\

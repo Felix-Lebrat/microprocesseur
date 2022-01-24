@@ -1,7 +1,6 @@
 all:
 	make --directory=assembleur/pssembleur
 	cp assembleur/pssembleur/clock/*.rom ./
-	cp netlist_compiler/out ./microprocesseur
 
 clock:
 	cp clock.pss.rom fe_ROM0

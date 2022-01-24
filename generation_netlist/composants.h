@@ -255,6 +255,7 @@ public:
     Variable* get_ram_ra(){return m_ram_ra;};
     Variable* get_ram_wa(){return m_ram_wa;};
     Variable* get_out(){return m_out;};
+    Alu* get_alu(){return m_alu;};
     std::vector<Variable*> get_variables();
     ~Microprocesseur();
 private:
@@ -265,6 +266,7 @@ private:
     Variable* m_ram_wa;
     Variable* m_out;
     Variable *m_pc;
+    Alu* m_alu;
 };
 
 

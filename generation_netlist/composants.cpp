@@ -712,10 +712,15 @@ Alu::Alu(Variable* instr,Variable* op1,Variable* op2)
     Primitive* z=new Primitive("NOT",1,{nz->get_sortie()});
     m_intermediaires.push_back(z);
     
-    Primitive* n=new Primitive("SELECT",1,{new Variable(0),m_sortie});
+    Primitive* n=new Primitive("SELECT",1,{new Variable(0),m_sortie});//negatif
     m_intermediaires.push_back(n);
 
-    m_flags=new Primitive("CONCAT",2,{n->get_sortie(),z->get_sortie()});
+    Primitive* l=new Primitive("NOT",1,{n->get_sortie()});//less
+    m_intermediaires.push_back(l);
+
+    
+
+    m_flags=new Primitive("CONCAT",2,{z->get_sortie(),l->get_sortie()});
     m_intermediaires.push_back(m_flags);
 
     ofstream fichier_alu("alu.net");
@@ -788,6 +793,7 @@ Microprocesseur::Microprocesseur()
     m_intermediaires.push_back(op2);
     Alu *alu=new Alu(decodeur->get_alu_instr(),op1->get_sortie(),op2->get_sortie());
     m_intermediaires.push_back(alu);
+    m_alu=alu;
 
     //mux final
     Primitive* mux_ret1=new Primitive("MUX",32,{

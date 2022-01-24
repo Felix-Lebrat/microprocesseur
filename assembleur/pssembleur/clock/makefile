@@ -1,3 +1,6 @@
+test: test_speed.pss
+	../pssembly test_speed.pss && cp test_speed.pss.rom fe_ROM0
+
 generate : clock.pss
 	../pssembly clock.pss && cp clock.pss.rom fe_ROM0
 

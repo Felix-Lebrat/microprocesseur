@@ -1,7 +1,23 @@
 debut:
-	mov r15 rbp
 	mov 0 r14
+	mov 1640 r8 #On met le nombre de secondes le 1er janvier 2022 dans r10
+	mul 10 r8
+	add 9 r8
+	mul 10 r8
+	add 9 r8
+	mul 10 r8
+	add 5 r8
+	mul 10 r8
+	add 2 r8
+	mul 100 r8
+	mov 3153 r12
+	mul 10 r12
+	add 6 r12
+ 	mul 1000 r12
+	mov 864 r11
+	mul 100 r11
 main:
+	mov r15 rbp
 	mov 1 r14
 	mov 0 rax # Seconde
 	mov 0 rbx	# Minute
@@ -11,31 +27,12 @@ main:
 	mov 2022 rsi # Annee
 	mov rbp r9
 	add rsp r9
-	mov 1640 r10 #On met le nombre de secondes le 1er janvier 2022 dans r10
-	mul 10 r10
-	add 9 r10
-	mul 10 r10
-	add 9 r10
-	mul 10 r10
-	add 5 r10
-	mul 10 r10
-	add 2 r10
-	mul 100 r10
-	sub r10 r9 # On ramene au nombre de secondes depuis début 2022
-	mov 3153 r10
-	mul 10 r10
-	add 6 r10
- 	mul 1000 r10
-	mov 864 r11
-	mul 100 r11
-	sub 1 r11
-	mov 3600 r12
-	sub 1 r12
-	mov 61 r13
+	sub r8 r9 # On ramene au nombre de secondes depuis début 2022
 calcul_an:
-	cmp r9 r10
+	cmp r9 r12
 	jl calcul_mois
 	add 1 rsi
+	sub r12 r9
 	jmp calcul_an
 calcul_mois:
 	mov 31 r10  #janvier
@@ -114,19 +111,20 @@ calcul_jour:
 	sub r11 r9
 	jmp calcul_jour
 calcul_heure:
-	cmp r9 r12
+	mov 3600 r13
+	cmp r9 r13
 	jl calcul_minute
 	add 1 rcx
-	sub r12 r9
+	sub r13 r9
 	jmp calcul_heure
 calcul_minute:
+	mov 60 r13
 	cmp r9 r13
 	jl calcul_seconde
 	add 1 rbx
 	sub r13 r9
 	jmp calcul_minute
 calcul_seconde:
-	mov 60 r13		
 	cmp r13 r9
 	jz mettre_zero
 	mov r9 rax
@@ -148,4 +146,4 @@ afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacem
 	add 1 r13
 	mov rsi (r13)
 	add 1 rsp
-	jmp debut
+	jmp main

@@ -107,7 +107,7 @@ void generateAdd(ostream &out, string E1, string E2, string S, string R="", bool
     id++;
 }
 
-void generateSlide(ostream &out, string E, string S, unsigned int d)//peut etre fait plus vite
+void generateSlide(ostream &out, string E, string S, unsigned int d)
 {
     out<<"//slide\n";
     string slide=E+"_0_"+to_string(nbits-d-1);
@@ -228,11 +228,13 @@ void netlistBody(ostream &out)
         else
             out << "nbits1" << i << " = 0" << endl;
     }
-    generateConcat(out, "nbits1", nbits);//000...001->nbits10_32
-    generateAdd(out, "ual_not_out", "nbits10_32", "ual_e2min", "ual_Rmin");//-e2->ual_2min
-    out << "ual_e2mod = MUX ual_instr0_00000110 ual_e2 ual_e2min" << endl;//si c'est un sub, -e2, sinon e2
-    vars.insert({"ual_e2mod",nbits});
-    generateAdd(out, "ual_e1", "ual_e2mod", "ual_add_out", "ual_addR");
+    generateConcat(out, "nbits1", nbits);//000...001->nbit10_32
+    out<<"ual_e1not=NOT ual_e1\n";
+    vars.insert({"ual_e1not",nbits});
+    generateAdd(out, "ual_e1not", "nbits10_32", "ual_e1min", "ual_Rmin");//-e2->ual_2min
+    out << "ual_e1mod = MUX ual_instr0_00000110 ual_e1 ual_e1min" << endl;//si c'est un sub, -e2, sinon e2
+    vars.insert({"ual_e1mod",nbits});
+    generateAdd(out, "ual_e2", "ual_e1mod", "ual_add_out", "ual_addR");
     out << "ual_instr_add_sub = OR ual_instr0_00000101 ual_instr0_00000110" << endl;//AND -> OR
     vars.insert({"ual_instr_add_sub",1});
     out << "ual_s_5 = MUX ual_instr_add_sub bit32_0 ual_add_out" << endl;

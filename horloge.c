@@ -15,5 +15,5 @@ int main(int argc, char *argv[]){
 			system("cp clock.pss.rom fe_ROM0");
 	}
 	
-	system("assembleur/pssembleur/clock/microprocesseur -a");
+	system("bin/microprocesseur -a");
 }

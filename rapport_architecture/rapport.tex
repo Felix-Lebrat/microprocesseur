@@ -9,6 +9,9 @@
 \usepackage{bbm}
 \usepackage{amsfonts}
 \usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{bbold}
+\usepackage{amsthm}
 \usepackage{pdfpages}
 \usepackage{graphicx}
 \usepackage{multicol}
@@ -109,12 +112,16 @@ et op2 un registre.
 
     \section{Choix techniques :}
     Les netlists sont écrites directement, à l'aide du C++ (ou d'un autre langage).
-		\section{Diagramme UML de la génération de netlist en C++}
-		\includegraphics[width=14.8cm,height=10.6cm,page=1]{uml.pdf}	
+		\section{Génération de netlist en C++}
+		\includegraphics[width=14.8cm,height=10.6cm,page=1]{uml.pdf}\\
+		Le dictionnaire \texttt{instances} dans la classe \texttt{Variable} associe un nom de variable au nombre de variables portant ce nom. Lorsqu'une variable est créée, on peut donc lui associer un numéro pour éviter la duplication des noms. Une netlist est représentée par un ensemble de \texttt{Composant}. Tous les \texttt{Composant} ont des méthodes \texttt{get\_variables} et \texttt{print}. La première renvoit l'ensemble des variables déclarées dans le \texttt{Composant} et la deuxième sert à écrire les équations qui les définissent dans un flux. De manière générale, les entrées et les sorties des composants sont représentées par des \texttt{Variable}.
+		\newpage
 		\section{Schéma du gestionnaire de registres}
 		\includegraphics[width=14.8cm,height=10.6cm,page=1]{gestionnaire_registres.pdf}
+		\newpage
 		\section{Schéma de l'ALU :}
 		\includegraphics[scale=0.75]{ual.png}
+		\newpage
 		\section{Assembleur et Horloge:}
 		L'assembleur a été réalisé en OCaml, il consiste en un lexer, un parser et une fonction transformant l'arbre de syntaxe abstraite en code binaire lu et reconnu par le décodeur du microprocesseur.\\	
 		L'Horloge a été faite avec l'assembleur, elle donne l'heure du Méridien de Greenwich.\\

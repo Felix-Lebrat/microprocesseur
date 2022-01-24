@@ -26,7 +26,7 @@ main:
 	mul 100 r11
 	sub 1 r11
 	mov 3600 r12
-	mov 59 r13
+	mov 60 r13
 calcul_an:
 	cmp r9 r10
 	jl calcul_mois

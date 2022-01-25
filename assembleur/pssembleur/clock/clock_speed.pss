@@ -1,5 +1,4 @@
 debut:
-	mov 0 r14
 	mov 1640 r8 #On met le nombre de secondes le 1er janvier 2022 dans r10
 	mul 10 r8
 	add 9 r8
@@ -18,7 +17,6 @@ debut:
 	mul 100 r11
 main:
 	mov r15 rbp
-	mov 1 r14
 	mov 0 rax # Seconde
 	mov 0 rbx	# Minute
 	mov 0 rcx # Heure
@@ -145,5 +143,6 @@ afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacem
 	mov rdi (r13)
 	add 1 r13
 	mov rsi (r13)
+	mov 1 r14
 	add 1 rsp
 	jmp main

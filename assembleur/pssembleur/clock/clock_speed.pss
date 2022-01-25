@@ -130,19 +130,54 @@ calcul_seconde:
 mettre_zero:
 	mov 0 rax
 	add 1 rbx
-afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacement et ensuite en r14		
+
+afficher: # On va mettre tout ce qui a ete calcule dans la memoire à l'emplacement et ensuite en r14
+	mov 0 r11
 	mov 1 r13 #On va mettre tout sur ce fragment de mémoire
 	mov rcx (r13) # On place les heures
 	add 1 r13
-	mov rbx (r13)
+	mov rbx (r13) #minutes
 	add 1 r13
-	mov rax (r13)
+	mov rax (r13) #secondes
 	add 1 r13
-	mov rdx (r13)
+	mov rdx (r13) #jour
 	add 1 r13
-	mov rdi (r13)
+	mov rdi (r13) #mois
 	add 1 r13
-	mov rsi (r13)
+	mov rsi (r13) #annee
 	mov 1 r14
 	add 1 rsp
-	jmp main
+	
+incrementer:
+	add 1 rax #secondes
+	cmp 60 rax
+	jnz fin
+	mov 0 rax
+	add 1 rbx #minutes
+	cmp 60 rbx
+	jnz fin
+	mov 0 rbx
+	add 1 rcx #heures
+	cmp 24 rcx
+	jnz fin
+	mov 0 rcx
+	add 1 rdx #jour
+	cmp 31 rdx
+	jnz fin
+	mov 1 rdx
+	add 1 rdi #mois
+	cmp 13 rdi
+	jnz fin
+	mov 1 rdi
+	add 1 rsi #annee
+
+fin:
+	mov r15 r12
+#loop:
+#	cmp r15 r12
+#	jnz loop
+
+	add 1 r11
+	cmp 100 r11
+	jz afficher
+	jmp incrementer

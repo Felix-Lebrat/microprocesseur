@@ -178,6 +178,6 @@ fin:
 #	jnz loop
 
 	add 1 r11
-	cmp 100 r11
+	cmp 1511 r11
 	jz afficher
 	jmp incrementer
